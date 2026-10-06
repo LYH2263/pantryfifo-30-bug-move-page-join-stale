@@ -20,12 +20,12 @@ from datetime import date, datetime, timezone
 
 from app.db import write_txn
 from app.engines.fefo import is_expired
+from app.engines.layer_join import EFFECTIVE_LAYER
 
 LAYERS = ("upper", "mid", "lower")
 
-# 有效层：批级覆盖优先，缺省回落到品项层。所有按层查询（层页/全层/按层消费）
-# 都必须用这一个表达式，禁止各自另写过滤条件。
-EFFECTIVE_LAYER = "COALESCE(lots.layer_override, items.layer)"
+# 有效层表达式的唯一定义在 engines.layer_join；转层、过滤、扣减、紧急条都取它。
+__all__ = ("EFFECTIVE_LAYER", "LAYERS", "ensure_schema", "transfer_lot")
 
 
 def ensure_schema(c):
@@ -73,7 +73,7 @@ def transfer_lot(c, lot_id: int, to_layer: str, from_layer: str | None = None,
                 raise _Reject("not_on_shelf", status=row["status"])
             if float(row["qty_remain"]) <= 0:
                 raise _Reject("empty")
-            if (not __import__("app.engines.layer_join", fromlist=["allow_expired_transfer"]).allow_expired_transfer()) and is_expired(row["expiry"], today):
+            if is_expired(row["expiry"], today):
                 raise _Reject("expired", expiry=row["expiry"])
             eff = row["eff_layer"]
             if from_layer is not None and from_layer != eff:

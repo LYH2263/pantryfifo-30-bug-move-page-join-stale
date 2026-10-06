@@ -17,8 +17,12 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { api } from './api'
 const alerts = ref([])
-onMounted(async () => { try { alerts.value = await api('/alerts') } catch { alerts.value = [] } })
+async function loadAlerts() { try { alerts.value = await api('/alerts') } catch { alerts.value = [] } }
+// 转层/扣减/收走任一写操作成功后，紧急条按同一提交后的状态重取：
+// 不会再出现条上已当过期消失、分层页还挂着，或反之的错位。
+onMounted(() => { loadAlerts(); window.addEventListener('pantry:changed', loadAlerts) })
+onUnmounted(() => window.removeEventListener('pantry:changed', loadAlerts))
 </script>

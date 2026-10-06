@@ -81,13 +81,15 @@ def consume(body: ConsumeIn):
     c = connect()
     try:
         with write_txn(c):
+            # 层位过滤与总表/分层页/紧急条同一表达式：转层后的批按覆盖归属目标层，
+            # 按下层扣不会扣到它，按中层扣才能扣到。过滤在 SQL 内一次完成，
+            # 不再查出后用 Python 二次筛（避免两处判定漂移）。
             q = f"""SELECT lots.*, {layer_join.consume_layer_expr()} AS layer FROM lots
                    JOIN items ON items.id=lots.item_id
                    WHERE lots.item_id=? AND lots.status='on_shelf' AND lots.qty_remain>0"""
             args = [body.item_id]
             if body.layer:
                 q += f" AND {layer_join.consume_layer_expr()}=?"; args.append(body.layer)
-            lots = layer_join.consume_filter_layer([dict(r) for r in c.execute(q, args)], body.layer)
             lots = [dict(r) for r in c.execute(q, args)]
             result = consume_fefo(lots, body.qty)
             if not result["ok"] and result["reason"] == "qty_non_positive":
