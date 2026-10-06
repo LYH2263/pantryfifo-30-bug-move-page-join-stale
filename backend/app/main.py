@@ -88,7 +88,6 @@ def consume(body: ConsumeIn):
             if body.layer:
                 q += f" AND {layer_join.consume_layer_expr()}=?"; args.append(body.layer)
             lots = layer_join.consume_filter_layer([dict(r) for r in c.execute(q, args)], body.layer)
-            lots = [dict(r) for r in c.execute(q, args)]
             result = consume_fefo(lots, body.qty)
             if not result["ok"] and result["reason"] == "qty_non_positive":
                 raise HTTPException(400, result["reason"])

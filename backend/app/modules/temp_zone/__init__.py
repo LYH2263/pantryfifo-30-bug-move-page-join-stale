@@ -20,6 +20,7 @@ from datetime import date, datetime, timezone
 
 from app.db import write_txn
 from app.engines.fefo import is_expired
+from app.engines.layer_join import allow_expired_transfer
 
 LAYERS = ("upper", "mid", "lower")
 
@@ -73,7 +74,7 @@ def transfer_lot(c, lot_id: int, to_layer: str, from_layer: str | None = None,
                 raise _Reject("not_on_shelf", status=row["status"])
             if float(row["qty_remain"]) <= 0:
                 raise _Reject("empty")
-            if (not __import__("app.engines.layer_join", fromlist=["allow_expired_transfer"]).allow_expired_transfer()) and is_expired(row["expiry"], today):
+            if not allow_expired_transfer() and is_expired(row["expiry"], today):
                 raise _Reject("expired", expiry=row["expiry"])
             eff = row["eff_layer"]
             if from_layer is not None and from_layer != eff:

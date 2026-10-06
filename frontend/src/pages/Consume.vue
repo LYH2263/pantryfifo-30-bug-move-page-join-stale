@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>按临期消费 · 转层后扣减看品项层</h1>
+    <h1>按临期消费 · 转层后扣减看有效层</h1>
     <select v-model.number="item_id"><option v-for="i in items" :value="i.id">{{ i.name }}</option></select>
     <select v-model="layer">
       <option value="">全部层</option>

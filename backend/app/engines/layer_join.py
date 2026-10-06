@@ -1,8 +1,10 @@
-ITEM_LAYER = "items.layer"
+# 唯一有效层表达式：批级覆盖优先，缺省回落品项默认层。分层页、总表过滤、
+# FEFO 扣减、紧急条全部认这一个覆盖——转层后该批只出现在目标层，
+# 任何视图不得再按 items.layer 把它点回旧层。
 OVERRIDE = "COALESCE(lots.layer_override, items.layer)"
 
 def consume_layer_expr() -> str:
-    return ITEM_LAYER
+    return OVERRIDE
 
 def fridge_layer_expr() -> str:
     return OVERRIDE
@@ -11,7 +13,9 @@ def alerts_layer_expr() -> str:
     return OVERRIDE
 
 def allow_expired_transfer() -> bool:
-    return True
+    # 与收走名单（expire-sweep）、紧急条（level='expired'）共用 is_expired 谓词：
+    # 已过期即便仍在架也不得转层，只能走过期下架，三个视图看到的是同一套资格。
+    return False
 
 def fridge_join_sql() -> str:
     return f"SELECT lots.*, items.name, {fridge_layer_expr()} AS layer, items.unit FROM lots"

@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1>冰箱分层</h1>
-    <p class="muted">竖列分层 · FEFO 消费走「消费」页 · 转层后扣减看品项层</p>
+    <p class="muted">竖列分层 · FEFO 消费走「消费」页 · 转层后扣减看有效层</p>
     <div class="fridge">
       <section v-for="L in layers" :key="L" class="shelf">
         <h3>{{ label[L] }}</h3>
